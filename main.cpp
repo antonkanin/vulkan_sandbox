@@ -1,35 +1,42 @@
-#include <vulkan/vulkan.h>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 #include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
 
-class HelloTriangleApplication {
+class HelloTriangleApplication
+{
 public:
-  void run() {
-    initVulkan();
-    mainLoop();
-    cleanup();
-  }
+    void run()
+    {
+        initVulkan();
+        mainLoop();
+        cleanup();
+    }
 
 private:
-  void initVulkan() {}
+    void initVulkan() {}
 
-  void mainLoop() {}
+    void mainLoop() {}
 
-  void cleanup() {}
+    void cleanup() {}
 };
 
-int main() {
-  HelloTriangleApplication app;
+int main()
+{
+    HelloTriangleApplication app;
 
-  try {
-    app.run();
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << std::endl;
-    return EXIT_FAILURE;
-  }
+    try
+    {
+        app.run();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
