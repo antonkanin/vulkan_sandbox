@@ -1,0 +1,3 @@
+#!/bin/bash
+# Formats the code using clang-format
+find . -regex '.*\.\(cpp\|hpp\|hxx\|h\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
