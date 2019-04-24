@@ -328,14 +328,12 @@ private:
         VkPhysicalDeviceFeatures deviceFeatures = {};
 
         VkDeviceCreateInfo createInfo = {};
-        createInfo.sType              = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
+        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         createInfo.queueCreateInfoCount =
             static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
-        createInfo.pEnabledFeatures = &deviceFeatures;
-
+        createInfo.pEnabledFeatures  = &deviceFeatures;
         createInfo.enabledExtensionCount =
             static_cast<uint32_t>(deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
@@ -385,10 +383,10 @@ private:
         createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = surface;
 
-        createInfo.minImageCount    = imageCount;
-        createInfo.imageFormat      = surfaceFormat.format;
-        createInfo.imageColorSpace  = surfaceFormat.colorSpace;
-        createInfo.imageExtent      = extent;
+        createInfo.minImageCount   = imageCount;
+        createInfo.imageFormat     = surfaceFormat.format;
+        createInfo.imageColorSpace = surfaceFormat.colorSpace;
+        // createInfo.imageExtent      = extent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -476,13 +474,15 @@ private:
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkSubpassDescription subpass = {};
+
         subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments    = &colorAttachmentRef;
 
         VkSubpassDependency dependency = {};
-        dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubpass          = 0;
+
+        dependency.srcSubpass   = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubpass   = 0;
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.srcAccessMask = 0;
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -514,6 +514,7 @@ private:
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
         VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
+
         vertShaderStageInfo.sType =
             VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         vertShaderStageInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
@@ -521,6 +522,7 @@ private:
         vertShaderStageInfo.pName  = "main";
 
         VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
+
         fragShaderStageInfo.sType =
             VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         fragShaderStageInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -532,30 +534,35 @@ private:
         };
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+
         vertexInputInfo.sType =
             VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount   = 0;
         vertexInputInfo.vertexAttributeDescriptionCount = 0;
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
+
         inputAssembly.sType =
             VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         inputAssembly.primitiveRestartEnable = VK_FALSE;
 
         VkViewport viewport = {};
-        viewport.x          = 0.0f;
-        viewport.y          = 0.0f;
-        viewport.width      = (float)swapChainExtent.width;
-        viewport.height     = (float)swapChainExtent.height;
-        viewport.minDepth   = 0.0f;
-        viewport.maxDepth   = 1.0f;
+
+        viewport.x        = 0.0f;
+        viewport.y        = 0.0f;
+        viewport.width    = (float)swapChainExtent.width;
+        viewport.height   = (float)swapChainExtent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
 
         VkRect2D scissor = {};
-        scissor.offset   = { 0, 0 };
-        scissor.extent   = swapChainExtent;
+
+        scissor.offset = { 0, 0 };
+        scissor.extent = swapChainExtent;
 
         VkPipelineViewportStateCreateInfo viewportState = {};
+
         viewportState.sType =
             VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = 1;
@@ -564,6 +571,7 @@ private:
         viewportState.pScissors     = &scissor;
 
         VkPipelineRasterizationStateCreateInfo rasterizer = {};
+
         rasterizer.sType =
             VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizer.depthClampEnable        = VK_FALSE;
@@ -575,18 +583,21 @@ private:
         rasterizer.depthBiasEnable         = VK_FALSE;
 
         VkPipelineMultisampleStateCreateInfo multisampling = {};
+
         multisampling.sType =
             VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampling.sampleShadingEnable  = VK_FALSE;
         multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
         VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+
         colorBlendAttachment.colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         colorBlendAttachment.blendEnable = VK_FALSE;
 
         VkPipelineColorBlendStateCreateInfo colorBlending = {};
+
         colorBlending.sType =
             VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         colorBlending.logicOpEnable     = VK_FALSE;
@@ -822,6 +833,7 @@ private:
     VkShaderModule createShaderModule(const std::vector<char>& code)
     {
         VkShaderModuleCreateInfo createInfo = {};
+
         createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         createInfo.codeSize = code.size();
         createInfo.pCode    = reinterpret_cast<const uint32_t*>(code.data());
