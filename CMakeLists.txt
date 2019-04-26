@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.7)
 
 project(vulkan_test)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME}
+        stb_image.h
+        main.cpp)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
