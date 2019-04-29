@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include "stb_image.h"
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -289,6 +289,9 @@ private:
     void cleanup()
     {
         cleanupSwapChain();
+
+        vkDestroyImage(device, textureImage, nullptr);
+        vkFreeMemory(device, textureImageMemory, nullptr);
 
         vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
@@ -829,7 +832,7 @@ private:
     void createTextureImage()
     {
         int          texWidth, texHeight, texChannels;
-        stbi_uc*     pixels    = stbi_load("textures/texture.jpg", &texWidth,
+        stbi_uc*     pixels    = stbi_load("textures/statue.jpg", &texWidth,
                                     &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
