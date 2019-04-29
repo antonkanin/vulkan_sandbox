@@ -1223,6 +1223,7 @@ private:
 
         VkBuffer       stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
+
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -1597,9 +1598,12 @@ private:
         ubo.proj[1][1] *= -1;
 
         void* data;
+
         vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo),
                     0, &data);
+
         memcpy(data, &ubo, sizeof(ubo));
+
         vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
     }
 
@@ -1633,19 +1637,21 @@ private:
         VkSemaphore waitSemaphores[] = {
             imageAvailableSemaphores[currentFrame]
         };
+
         VkPipelineStageFlags waitStages[] = {
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
         };
+
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores    = waitSemaphores;
         submitInfo.pWaitDstStageMask  = waitStages;
-
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers    = &commandBuffers[imageIndex];
 
         VkSemaphore signalSemaphores[] = {
             renderFinishedSemaphores[currentFrame]
         };
+
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores    = signalSemaphores;
 
