@@ -136,7 +136,19 @@ struct UniformBufferObject
     alignas(16) glm::mat4 proj;
 };
 
-const std::vector<Vertex> vertices = {
+std::vector<Vertex> vertices = {
+    { { -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
+    { { 0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },
+    { { 0.5f, 0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
+    { { -0.5f, 0.5f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f } },
+
+    { { -0.5f, -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
+    { { 0.5f, -0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },
+    { { 0.5f, 0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
+    { { -0.5f, 0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f } }
+};
+
+const std::vector<Vertex> vertices2 = {
     { { -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
     { { 0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },
     { { 0.5f, 0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
@@ -150,11 +162,20 @@ const std::vector<Vertex> vertices = {
 
 const std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4 };
 
+void move_vertices(std::vector<Vertex>& vertices)
+{
+    for (auto& v : vertices)
+    {
+        v.pos += 0.5;
+    }
+}
+
 class HelloTriangleApplication
 {
 public:
     void run()
     {
+        move_vertices(vertices);
         initWindow();
         initVulkan();
         mainLoop();
@@ -199,6 +220,10 @@ private:
 
     VkBuffer       vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+
+    VkBuffer       vertexBuffer_2;
+    VkDeviceMemory vertexBufferMemory_2;
+
     VkBuffer       indexBuffer;
     VkDeviceMemory indexBufferMemory;
 
@@ -257,12 +282,14 @@ private:
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
-        createVertexBuffer();
+        createVertexBuffer(vertexBuffer, vertexBufferMemory);
+        createVertexBuffer(vertexBuffer_2, vertexBufferMemory_2);
         createIndexBuffer();
         createUniformBuffers();
         createDescriptorPool();
         createDescriptorSets();
         createCommandBuffers();
+        // recordCommandBuffers();
         createSyncObjects();
     }
 
@@ -271,6 +298,8 @@ private:
         while (!glfwWindowShouldClose(window))
         {
             glfwPollEvents();
+            // createCommandBuffers();
+            // recordCommandBuffers();
             drawFrame();
         }
 
@@ -329,6 +358,10 @@ private:
 
         vkDestroyBuffer(device, vertexBuffer, nullptr);
         vkFreeMemory(device, vertexBufferMemory, nullptr);
+
+        // second object
+        vkDestroyBuffer(device, vertexBuffer_2, nullptr);
+        vkFreeMemory(device, vertexBufferMemory_2, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
@@ -607,7 +640,7 @@ private:
         createUniformBuffers();
         createDescriptorPool();
         createDescriptorSets();
-        createCommandBuffers();
+        // createCommandBuffers();
     }
 
     void createImageViews()
@@ -1130,6 +1163,12 @@ private:
         poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
+        // poolInfo.flags = 0;
+        // poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        // Anton: might need to add VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
+        // and VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+
         if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) !=
             VK_SUCCESS)
         {
@@ -1217,7 +1256,8 @@ private:
         endSingleTimeCommands(commandBuffer);
     }
 
-    void createVertexBuffer()
+    void createVertexBuffer(VkBuffer&       vertex_buffer,
+                            VkDeviceMemory& vertex_bufferMemory)
     {
         VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
@@ -1237,10 +1277,10 @@ private:
         createBuffer(bufferSize,
                      VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer,
-                     vertexBufferMemory);
+                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertex_buffer,
+                     vertex_bufferMemory);
 
-        copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+        copyBuffer(stagingBuffer, vertex_buffer, bufferSize);
 
         vkDestroyBuffer(device, stagingBuffer, nullptr);
         vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -1486,12 +1526,20 @@ private:
         {
             throw std::runtime_error("failed to allocate command buffers!");
         }
+    }
 
+    void recordCommandBuffers()
+    {
         for (size_t i = 0; i < commandBuffers.size(); i++)
         {
             VkCommandBufferBeginInfo beginInfo = {};
             beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+
+            // Anton: will need to change this to
+            // VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT if we are going to
+            // rerecord it every frame
+            // beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
             if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) !=
                 VK_SUCCESS)
@@ -1522,9 +1570,10 @@ private:
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
                               graphicsPipeline);
 
-            VkBuffer     vertexBuffers[] = { vertexBuffer };
+            VkBuffer     vertexBuffers_1[] = { vertexBuffer };
             VkDeviceSize offsets[]       = { 0 };
-            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers,
+
+            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers_1,
                                    offsets);
 
             vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
@@ -1607,10 +1656,142 @@ private:
         vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
     }
 
+    void record_command_buffer(VkCommandBuffer& command_buffer,
+                               VkFramebuffer&   frame_buffer,
+                               VkDescriptorSet& descriptor_set)
+    {
+
+        VkCommandBufferBeginInfo beginInfo = {};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        // Anton: will need to change this to
+        // VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT if we are going to
+        // rerecord it every frame
+        // beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        if (vkBeginCommandBuffer(command_buffer, &beginInfo) != VK_SUCCESS)
+        {
+            throw std::runtime_error(
+                "failed to begin recording command buffer!");
+        }
+
+        VkRenderPassBeginInfo renderPassInfo = {};
+        renderPassInfo.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass  = renderPass;
+        renderPassInfo.framebuffer = frame_buffer;
+        renderPassInfo.renderArea.offset = { 0, 0 };
+        renderPassInfo.renderArea.extent = swapChainExtent;
+
+        std::array<VkClearValue, 2> clearValues = {};
+        clearValues[0].color                    = { 0.0f, 0.0f, 0.0f, 1.0f };
+        clearValues[1].depthStencil             = { 1.0f, 0 };
+
+        renderPassInfo.clearValueCount =
+            static_cast<uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
+
+        vkCmdBeginRenderPass(command_buffer, &renderPassInfo,
+                             VK_SUBPASS_CONTENTS_INLINE);
+
+        vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          graphicsPipeline);
+
+        VkBuffer     vertexBuffers[] = { vertexBuffer };
+        VkDeviceSize offsets[]       = { 0 };
+
+        vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
+
+        vkCmdBindIndexBuffer(command_buffer, indexBuffer, 0,
+                             VK_INDEX_TYPE_UINT16);
+
+        vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                pipelineLayout, 0, 1, &descriptor_set, 0,
+                                nullptr);
+
+        vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(indices.size()),
+                         1, 0, 0, 0);
+
+        vkCmdEndRenderPass(command_buffer);
+
+        if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to record command buffer!");
+        }
+    }
+
+    void submit_to_rendering_queue(VkSemaphore&     wait_semaphore,
+                                   VkSemaphore&     signal_semaphore,
+                                   VkCommandBuffer& command_buffer,
+                                   VkFence&         queue_fence)
+    {
+        VkSubmitInfo submitInfo = {};
+        submitInfo.sType        = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+        VkSemaphore waitSemaphores[] = { wait_semaphore };
+
+        VkPipelineStageFlags waitStages[] = {
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+        };
+
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores    = waitSemaphores;
+        submitInfo.pWaitDstStageMask  = waitStages;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers    = &command_buffer;
+
+        VkSemaphore signalSemaphores[] = { signal_semaphore };
+
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores    = signalSemaphores;
+
+        vkResetFences(device, 1, &queue_fence);
+
+        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, queue_fence) !=
+            VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to submit draw command buffer!");
+        }
+    }
+
+    void submit_to_presentation_queue(VkSemaphore& wait_semaphore,
+                                      uint32_t&    image_index)
+    {
+        VkPresentInfoKHR presentInfo = {};
+        presentInfo.sType            = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+        VkSemaphore waitSemaphores[] = { wait_semaphore };
+
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores    = waitSemaphores;
+
+        VkSwapchainKHR swapChains[] = { swapChain };
+        presentInfo.swapchainCount  = 1;
+        presentInfo.pSwapchains     = swapChains;
+
+        presentInfo.pImageIndices = &image_index;
+
+        VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
+            framebufferResized)
+        {
+            framebufferResized = false;
+            recreateSwapChain();
+        }
+        else if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to present swap chain image!");
+        }
+    }
+
     void drawFrame()
     {
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE,
                         std::numeric_limits<uint64_t>::max());
+
+        //**********************************************************************
+        // getting available image from the swap chain
 
         uint32_t imageIndex;
 
@@ -1629,64 +1810,32 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
+        //**********************************************************************
+        // prepare frame buffer
+
+        record_command_buffer(commandBuffers[currentFrame],
+                              swapChainFramebuffers[imageIndex],
+                              descriptorSets[imageIndex]);
+
+        //**********************************************************************
+        // updating uniforms
+
+        // updateUniformBuffer(imageIndex);
         updateUniformBuffer(imageIndex);
 
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType        = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        //**********************************************************************
+        // rendering (drawing) queue
 
-        VkSemaphore waitSemaphores[] = {
-            imageAvailableSemaphores[currentFrame]
-        };
+        submit_to_rendering_queue(imageAvailableSemaphores[currentFrame],
+                                  renderFinishedSemaphores[currentFrame],
+                                  commandBuffers[currentFrame],
+                                  inFlightFences[currentFrame]);
 
-        VkPipelineStageFlags waitStages[] = {
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-        };
+        //**********************************************************************
+        // presentation queue
 
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores    = waitSemaphores;
-        submitInfo.pWaitDstStageMask  = waitStages;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers    = &commandBuffers[imageIndex];
-
-        VkSemaphore signalSemaphores[] = {
-            renderFinishedSemaphores[currentFrame]
-        };
-
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores    = signalSemaphores;
-
-        vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
-        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo,
-                          inFlightFences[currentFrame]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to submit draw command buffer!");
-        }
-
-        VkPresentInfoKHR presentInfo = {};
-        presentInfo.sType            = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores    = signalSemaphores;
-
-        VkSwapchainKHR swapChains[] = { swapChain };
-        presentInfo.swapchainCount  = 1;
-        presentInfo.pSwapchains     = swapChains;
-
-        presentInfo.pImageIndices = &imageIndex;
-
-        result = vkQueuePresentKHR(presentQueue, &presentInfo);
-
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
-            framebufferResized)
-        {
-            framebufferResized = false;
-            recreateSwapChain();
-        }
-        else if (result != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to present swap chain image!");
-        }
+        submit_to_presentation_queue(renderFinishedSemaphores[currentFrame],
+                                     imageIndex);
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
